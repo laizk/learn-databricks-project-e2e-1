@@ -1,0 +1,14 @@
+# The main pipeline for learn_databricks_project_e2e_1
+resources:
+  pipelines:
+    learn_databricks_project_e2e_1_pipeline:
+      name: learn_databricks_project_e2e_1_pipeline
+      catalog: workspace
+      schema: learn_databricks_project_e2e_1_${bundle.target}
+      serverless: true
+      libraries:
+        - notebook:
+            path: ../src/dlt_pipeline.ipynb
+
+      configuration:
+        bundle.sourcePath: ${workspace.file_path}/src
