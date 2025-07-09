@@ -1,0 +1,31 @@
+resources:
+  jobs:
+    bronze_incremental:
+      name: 'Bronze Incremental Job'
+      tasks:
+        - task_key: list_parameters_task
+          description: 'Task to set parameters for the bronze layer job'
+          notebook_task:
+            notebook_path: ../parameters.ipynb
+
+        - task_key: process_bronze_autoloader_loop_task
+          description: 'Task to run the bronze layer autoloader notebook'
+          depends_on:
+            - task_key: list_parameters_task
+          for_each_task:
+            inputs: '{{tasks.list_parameters_task.values.output_datasets}}'
+            task:
+              task_key: bronze_layer_task
+              description: 'Task to process the bronze layer for each dataset'
+              notebook_task:
+                notebook_path: ../bronze_layer.ipynb
+                base_parameters:
+                  file_name: '{{input.file_name}}'
+  
+
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+            dependencies:
+              - ../../../dist/*.whl

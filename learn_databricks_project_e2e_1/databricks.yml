@@ -7,6 +7,8 @@ bundle:
 include:
   - resources/*.yml
   - resources/*/*.yml
+  - src/*/resources/*.yml
+  - src/*/resources/*/*.yml
 
 targets:
   dev:
