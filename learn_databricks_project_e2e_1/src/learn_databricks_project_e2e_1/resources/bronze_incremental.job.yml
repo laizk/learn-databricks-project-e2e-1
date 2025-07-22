@@ -18,7 +18,7 @@ resources:
               task_key: bronze_layer_task
               description: 'Task to process the bronze layer for each dataset'
               notebook_task:
-                notebook_path: ../bronze_layer.ipynb
+                notebook_path: ./bronze_layer.ipynb
                 base_parameters:
                   file_name: '{{input.file_name}}'
   
