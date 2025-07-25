@@ -1,0 +1,77 @@
+resources:
+  jobs:
+    bronze_incremental:
+      name: 'Bronze Incremental Job'
+      tasks:
+        - task_key: list_parameters_task
+          description: 'Task to set parameters for the bronze layer job'
+          notebook_task:
+            notebook_path: ../parameters.ipynb
+
+        - task_key: process_bronze_autoloader_loop_task
+          description: 'Task to run the bronze layer autoloader notebook'
+          depends_on:
+            - task_key: list_parameters_task
+          for_each_task:
+            inputs: '{{tasks.list_parameters_task.values.output_datasets}}'
+            task:
+              task_key: bronze_layer_task
+              description: 'Task to process the bronze layer for each dataset'
+              notebook_task:
+                notebook_path: ./bronze_layer.ipynb
+                base_parameters:
+                  file_name: '{{input.file_name}}'
+
+        - task_key: silver_orders
+          description: 'Task to run the silver layer notebook for orders'
+          depends_on:
+            - task_key: process_bronze_autoloader_loop_task
+          notebook_task:
+            notebook_path: ./silver_orders.ipynb
+  
+        - task_key: silver_customers
+          description: 'Task to run the silver layer notebook for customers'
+          depends_on:
+            - task_key: process_bronze_autoloader_loop_task
+          notebook_task:
+            notebook_path: ./silver_customers.ipynb
+
+        - task_key: silver_products
+          description: 'Task to run the silver layer notebook for products'
+          depends_on:
+            - task_key: process_bronze_autoloader_loop_task
+          notebook_task:
+            notebook_path: ./silver_products.ipynb
+
+        - task_key: gold_customers
+          description: 'Task to run the gold layer notebook for customers'
+          depends_on:
+            - task_key: silver_customers
+            - task_key: silver_products
+            - task_key: silver_orders
+          notebook_task:
+            notebook_path: ../gold_customers.ipynb    
+
+        - task_key: gold_products
+          description: 'Task to run the gold layer notebook for products'
+          depends_on:
+            - task_key: silver_customers
+            - task_key: silver_products
+            - task_key: silver_orders
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.learn_databricks_project_e2e_1_pipeline.id}
+
+        - task_key: gold_orders
+          description: 'Task to run the gold layer notebook for orders'
+          depends_on:
+            - task_key: gold_customers
+            - task_key: gold_products
+          notebook_task:
+            notebook_path: ./gold_orders.ipynb                  
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+            dependencies:
+              - ../../../dist/*.whl
